@@ -7,7 +7,7 @@ include $(ROOT_DIR)/build/makefiles/release.makefile
 ifdef VER
 VERSION=$(shell echo $(VER) | sed -e 's/^v//g' -e 's/\//_/g')
 else
-VERSION=$(shell grep -oP 'version\s*=\s*"\K[^"]+' project.nix | head -n 1)
+VERSION=$(shell grep -oP 'version\s*=\s*"\K[^"]+' flake.nix | head -n 1)
 endif
 
 ifeq ($(shell uname -m),x86_64)
@@ -49,8 +49,8 @@ print-vars:  ## print all variables
 
 .PHONY: get-version
 get-version:  ## Return version
-	@sed -i '/^\s*version = "0.0.0-dev";/s//version = "${VERSION}";/' project.nix
-	@sed -i '/^\s*created = "1970-.*";/s//created = "${shell date --utc '+%Y-%m-%dT%H:%M:%SZ'}";/' project.nix
+	@sed -i '/^\s*version = "0.0.0-dev";/s//version = "${VERSION}";/' flake.nix
+	@sed -i '/^\s*created = "1970-.*";/s//created = "${shell date --utc '+%Y-%m-%dT%H:%M:%SZ'}";/' flake.nix
 	@echo $(VERSION)
 
 
