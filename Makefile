@@ -1,0 +1,24 @@
+ROOT_DIR?=$(abspath .)
+include $(ROOT_DIR)/build/makefiles/general.makefile
+
+
+.PHONY: _dev-env-up
+_dev-env-up:
+	@echo "Nothing to do"
+
+
+.PHONY: _dev-env-down
+_dev-env-down:
+	@echo "Nothing to do"
+
+
+.PHONY: _dev-env-build
+_dev-env-build: build-docker-image
+	@echo "Nothing to do"
+
+
+.PHONY: build-multiplatform
+build-multiplatform:  ## Build cli for all supported platforms
+	nix build \
+		--print-build-logs \
+		.\#packages.$(ARCH)-$(OS).lazyreview-multiplatform

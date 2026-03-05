@@ -1,0 +1,6 @@
+.direnv/
+.envrc.custom
+result
+result.zip
+.lazyreview/
+.claude/settings.local.json

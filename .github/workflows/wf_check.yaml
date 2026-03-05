@@ -1,0 +1,90 @@
+---
+on:
+  workflow_call:
+    inputs:
+      NAME:
+        type: string
+        required: true
+      PATH:
+        type: string
+        required: true
+      GIT_REF:
+        type: string
+        required: false
+    secrets:
+      AWS_ACCOUNT_ID:
+        required: true
+      NIX_CACHE_PUB_KEY:
+        required: true
+      NIX_CACHE_PRIV_KEY:
+        required: true
+      NHOST_PAT:
+        required: false
+
+jobs:
+  tests:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.PATH }}
+
+    env:
+      NHOST_PAT: ${{ secrets.NHOST_PAT }}
+
+    permissions:
+      id-token: write
+      contents: write
+      actions: read
+
+    steps:
+      - name: "Check out repository"
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.GIT_REF }}
+
+      - name: "Validate PR title"
+        uses: ./.github/actions/validate-pr-title
+        with:
+          pr_title: ${{ github.event.pull_request.title }}
+        if: ${{ github.event_name == 'pull_request' || github.event_name == 'pull_request_target' }}
+
+      - name: Collect Workflow Telemetry
+        uses: catchpoint/workflow-telemetry-action@v2
+        with:
+          comment_on_pr: false
+
+      - name: Configure aws
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-nhost-${{ github.event.repository.name }}
+          aws-region: eu-central-1
+
+      - name: Setup Nix with Cache
+        uses: ./.github/actions/setup-nix
+        with:
+          NAME: ${{ inputs.NAME }}
+          NIX_CACHE_PUB_KEY: ${{ secrets.NIX_CACHE_PUB_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Verify if we need to build"
+        id: verify-build
+        run: |
+          export drvPath=$(make check-dry-run)
+          echo "Derivation path: $drvPath"
+          nix path-info --store s3://nhost-nix-cache\?region=eu-central-1 $drvPath \
+            && export BUILD_NEEDED=no \
+            || export BUILD_NEEDED=yes
+          echo BUILD_NEEDED=$BUILD_NEEDED >> $GITHUB_OUTPUT
+          echo DERIVATION_PATH=$drvPath >> $GITHUB_OUTPUT
+
+      - name: "Run checks"
+        run: make check
+        if: ${{ steps.verify-build.outputs.BUILD_NEEDED == 'yes' }}
+
+      - name: "Store Nix cache"
+        uses: ./.github/actions/cache-nix
+        with:
+          NIX_CACHE_PRIV_KEY: ${{ secrets.NIX_CACHE_PRIV_KEY }}
+        if: always()

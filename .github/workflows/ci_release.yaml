@@ -1,0 +1,49 @@
+---
+name: "ci: release"
+on:
+  release:
+    types: [published]
+
+jobs:
+  extract-project:
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 5
+    outputs:
+      project: ${{ steps.extract.outputs.project }}
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - name: "Extract project and version from tag"
+        id: extract
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+
+          PROJECT=$(echo "${TAG}" | sed 's/@[^@]*$//')
+          if [ -z "$PROJECT" ]; then
+            echo "Error: Could not extract project name from tag"
+            exit 1
+          fi
+
+          VERSION=$(echo "${TAG}" | sed 's/.*@//')
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version from tag"
+            exit 1
+          fi
+
+          echo "project=$PROJECT" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted project: $PROJECT, version: $VERSION"
+
+  lazyreview:
+    needs: extract-project
+    if: needs.extract-project.outputs.project == 'lazyreview'
+    uses: ./.github/workflows/lazyreview_wf_release.yaml
+    with:
+      GIT_REF: ${{ github.sha }}
+      VERSION: ${{ needs.extract-project.outputs.version }}
+    secrets:
+      AWS_ACCOUNT_ID: ${{ secrets.AWS_PRODUCTION_CORE_ACCOUNT_ID }}
+      NIX_CACHE_PUB_KEY: ${{ secrets.NIX_CACHE_PUB_KEY }}
+      NIX_CACHE_PRIV_KEY: ${{ secrets.NIX_CACHE_PRIV_KEY }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
