@@ -89,6 +89,60 @@
             inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
           };
 
+          cli-arm64-darwin = (nixops-lib.go.package {
+            inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
+          }).overrideAttrs (old: old // {
+            env = {
+              GOOS = "darwin";
+              GOARCH = "arm64";
+              CGO_ENABLED = "0";
+            };
+          });
+
+          cli-amd64-darwin = (nixops-lib.go.package {
+            inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
+          }).overrideAttrs (old: old // {
+            env = {
+              GOOS = "darwin";
+              GOARCH = "amd64";
+              CGO_ENABLED = "0";
+            };
+          });
+
+          cli-arm64-linux = (nixops-lib.go.package {
+            inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
+          }).overrideAttrs (old: old // {
+            env = {
+              GOOS = "linux";
+              GOARCH = "arm64";
+              CGO_ENABLED = "0";
+            };
+          });
+
+          cli-amd64-linux = (nixops-lib.go.package {
+            inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
+          }).overrideAttrs (old: old // {
+            env = {
+              GOOS = "linux";
+              GOARCH = "amd64";
+              CGO_ENABLED = "0";
+            };
+          });
+
+          cli-multiplatform = pkgs.runCommand "cli-multiplatform-${version}"
+            {
+              meta = {
+                description = "Multi-platform ${description} binaries";
+              };
+            } ''
+            mkdir -p $out/{darwin,linux}/{arm64,amd64}
+
+            cp ${cli-arm64-darwin}/bin/${name} $out/darwin/arm64/cli
+            cp ${cli-amd64-darwin}/bin/${name} $out/darwin/amd64/cli
+            cp ${cli-arm64-linux}/bin/${name} $out/linux/arm64/cli
+            cp ${cli-amd64-linux}/bin/${name} $out/linux/amd64/cli
+          '';
+
           default = lazyreview;
         };
       }

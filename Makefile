@@ -15,3 +15,10 @@ _dev-env-down:
 .PHONY: _dev-env-build
 _dev-env-build: build-docker-image
 	@echo "Nothing to do"
+
+
+.PHONY: build-multiplatform
+build-multiplatform:  ## Build cli for all supported platforms
+	nix build \
+		--print-build-logs \
+		.\#packages.$(ARCH)-$(OS).cli-multiplatform

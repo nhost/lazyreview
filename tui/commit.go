@@ -50,7 +50,7 @@ func (m *commitModel) update(msg tea.KeyPressMsg) tea.Cmd {
 		return m.submit()
 
 	default:
-		m.handleEditKey(msg.String())
+		m.handleEditKey(msg)
 	}
 
 	return nil
@@ -67,8 +67,8 @@ func (m *commitModel) submit() tea.Cmd {
 	return func() tea.Msg { return commitSubmitMsg{Message: message} }
 }
 
-func (m *commitModel) handleEditKey(key string) {
-	switch key {
+func (m *commitModel) handleEditKey(msg tea.KeyPressMsg) {
+	switch msg.String() {
 	case "backspace":
 		m.deleteBack()
 	case "delete":
@@ -86,7 +86,9 @@ func (m *commitModel) handleEditKey(key string) {
 		m.message = string(runes[m.cursor:])
 		m.cursor = 0
 	default:
-		m.insertChar(key)
+		if msg.Text != "" {
+			m.insertText(msg.Text)
+		}
 	}
 }
 
@@ -117,13 +119,11 @@ func (m *commitModel) moveCursorRight() {
 	}
 }
 
-func (m *commitModel) insertChar(key string) {
-	runes := []rune(key)
-	if len(runes) == 1 && runes[0] >= ' ' {
-		msgRunes := []rune(m.message)
-		m.message = string(msgRunes[:m.cursor]) + key + string(msgRunes[m.cursor:])
-		m.cursor++
-	}
+func (m *commitModel) insertText(text string) {
+	msgRunes := []rune(m.message)
+	textRunes := []rune(text)
+	m.message = string(msgRunes[:m.cursor]) + text + string(msgRunes[m.cursor:])
+	m.cursor += len(textRunes)
 }
 
 func (m *commitModel) view(width, height int) string {

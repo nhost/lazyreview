@@ -1,0 +1,77 @@
+---
+name: "ci: create release"
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  create-release:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.title, 'release(')
+    runs-on: blacksmith-2vcpu-ubuntu-2404
+    timeout-minutes: 30
+
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: read
+      actions: write
+
+    steps:
+    - name: "Check out repository"
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+
+    - name: Setup Nix with Cache
+      uses: ./.github/actions/setup-nix
+      with:
+        NAME: ${{ inputs.NAME }}
+        NIX_CACHE_PUB_KEY: ${{ secrets.NIX_CACHE_PUB_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: "Extract project and version from PR title"
+      id: extract
+      run: |
+        TITLE="${{ github.event.pull_request.title }}"
+
+        PROJECT=$(echo "${TITLE}" | sed 's/release(\([^)]*\)).*/\1/')
+        if [ -z "$PROJECT" ]; then
+          echo "Error: Could not extract project name from PR title"
+          exit 1
+        fi
+
+        VERSION=$(echo "${TITLE}" | sed 's/.*release([^)]*):\W*\(.*\).*/\1/')
+        if [ -z "$VERSION" ]; then
+          echo "Error: Could not extract version from PR title"
+          exit 1
+        fi
+
+        cd $PROJECT
+
+        PROJECT_NAME=$(make release-tag-name)
+
+        echo "project=$PROJECT" >> $GITHUB_OUTPUT
+        echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=$PROJECT_NAME@$VERSION" >> $GITHUB_OUTPUT
+
+    - name: "Get unreleased changelog content"
+      id: changelog
+      run: |
+        cd ${{ steps.extract.outputs.project }}
+        CHANGELOG_CONTENT=$(nix develop .#cliff -c make changelog-get-unreleased)
+        echo "content<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: "Create GitHub Release"
+      run: |
+        gh release create "${{ steps.extract.outputs.tag }}" \
+          --title "${{ steps.extract.outputs.tag }}" \
+          --notes "${{ steps.changelog.outputs.content }}" \
+          --target main
+      env:
+        # We need to use a PAT because GITHUB_TOKEN does not trigger workflows on releases
+        GH_TOKEN: ${{ secrets.GH_PAT }}
