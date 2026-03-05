@@ -89,7 +89,7 @@
             inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
           };
 
-          cli-arm64-darwin = (nixops-lib.go.package {
+          lazyreview-arm64-darwin = (nixops-lib.go.package {
             inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
           }).overrideAttrs (old: old // {
             env = {
@@ -99,7 +99,7 @@
             };
           });
 
-          cli-amd64-darwin = (nixops-lib.go.package {
+          lazyreview-amd64-darwin = (nixops-lib.go.package {
             inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
           }).overrideAttrs (old: old // {
             env = {
@@ -109,7 +109,7 @@
             };
           });
 
-          cli-arm64-linux = (nixops-lib.go.package {
+          lazyreview-arm64-linux = (nixops-lib.go.package {
             inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
           }).overrideAttrs (old: old // {
             env = {
@@ -119,7 +119,7 @@
             };
           });
 
-          cli-amd64-linux = (nixops-lib.go.package {
+          lazyreview-amd64-linux = (nixops-lib.go.package {
             inherit name submodule description src version ldflags buildInputs nativeBuildInputs;
           }).overrideAttrs (old: old // {
             env = {
@@ -129,7 +129,7 @@
             };
           });
 
-          cli-multiplatform = pkgs.runCommand "cli-multiplatform-${version}"
+          lazyreview-multiplatform = pkgs.runCommand "cli-multiplatform-${version}"
             {
               meta = {
                 description = "Multi-platform ${description} binaries";
@@ -137,10 +137,10 @@
             } ''
             mkdir -p $out/{darwin,linux}/{arm64,amd64}
 
-            cp ${cli-arm64-darwin}/bin/${name} $out/darwin/arm64/cli
-            cp ${cli-amd64-darwin}/bin/${name} $out/darwin/amd64/cli
-            cp ${cli-arm64-linux}/bin/${name} $out/linux/arm64/cli
-            cp ${cli-amd64-linux}/bin/${name} $out/linux/amd64/cli
+            cp ${lazyreview-arm64-darwin}/bin/${name} $out/darwin/arm64/${name}
+            cp ${lazyreview-amd64-darwin}/bin/${name} $out/darwin/amd64/${name}
+            cp ${lazyreview-arm64-linux}/bin/${name} $out/linux/arm64/${name}
+            cp ${lazyreview-amd64-linux}/bin/${name} $out/linux/amd64/${name}
           '';
 
           default = lazyreview;

@@ -1,5 +1,5 @@
 ---
-name: "cli: release"
+name: "lazyreview: release"
 on:
   workflow_call:
     inputs:
@@ -27,8 +27,8 @@ jobs:
   build_artifacts:
     uses: ./.github/workflows/wf_build_artifacts.yaml
     with:
-      NAME: cli
-      PATH: cli
+      NAME: lazyreview
+      PATH: .
       GIT_REF: ${{ inputs.GIT_REF }}
       VERSION: ${{ inputs.VERSION }}
       DOCKER: true
@@ -44,7 +44,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: cli
+        working-directory: .
 
     runs-on: blacksmith-2vcpu-ubuntu-2404
     timeout-minutes: 180
@@ -64,7 +64,7 @@ jobs:
       - name: Setup Nix with Cache
         uses: ./.github/actions/setup-nix
         with:
-          NAME: cli
+          NAME: lazyreview
           NIX_CACHE_PUB_KEY: ${{ secrets.NIX_CACHE_PUB_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -88,10 +88,10 @@ jobs:
 
           mkdir upload
 
-          tar cvzf upload/cli-$VERSION-darwin-amd64.tar.gz -C result/darwin/amd64 cli
-          tar cvzf upload/cli-$VERSION-darwin-arm64.tar.gz -C result/darwin/arm64 cli
-          tar cvzf upload/cli-$VERSION-linux-amd64.tar.gz -C result/linux/amd64 cli
-          tar cvzf upload/cli-$VERSION-linux-arm64.tar.gz -C result/linux/arm64 cli
+          tar cvzf upload/lazyreview-$VERSION-darwin-amd64.tar.gz -C result/darwin/amd64 lazyreview
+          tar cvzf upload/lazyreview-$VERSION-darwin-arm64.tar.gz -C result/darwin/arm64 lazyreview
+          tar cvzf upload/lazyreview-$VERSION-linux-amd64.tar.gz -C result/linux/amd64 lazyreview
+          tar cvzf upload/lazyreview-$VERSION-linux-arm64.tar.gz -C result/linux/arm64 lazyreview
 
           cd upload
           find . -type f -exec sha256sum {} + > ../checksums.txt

@@ -91,22 +91,6 @@ jobs:
           path: ${{ inputs.PATH }}/result.zip
           retention-days: 7
 
-      - name: "Build docker image"
-        run: |
-          sudo chmod 755 /run/containers
-          sudo mkdir -p "/run/containers/$(id -u runner)"
-          sudo chown runner: "/run/containers/$(id -u runner)"
-          make build-docker-image
-        if: ${{ ( inputs.DOCKER ) }}
-
-      - name: "Push docker image to artifact repository"
-        uses: actions/upload-artifact@v6
-        with:
-          name: ${{ inputs.NAME }}-docker-image-${{ steps.vars.outputs.ARCH }}-${{ steps.vars.outputs.VERSION }}
-          path: ${{ inputs.PATH }}/result
-          retention-days: 7
-        if: ${{ ( inputs.DOCKER ) }}
-
       - name: "Store Nix cache"
         uses: ./.github/actions/cache-nix
         with:

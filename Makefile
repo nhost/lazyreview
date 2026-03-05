@@ -21,4 +21,4 @@ _dev-env-build: build-docker-image
 build-multiplatform:  ## Build cli for all supported platforms
 	nix build \
 		--print-build-logs \
-		.\#packages.$(ARCH)-$(OS).cli-multiplatform
+		.\#packages.$(ARCH)-$(OS).lazyreview-multiplatform

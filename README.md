@@ -22,6 +22,20 @@ A TUI tool for reviewing branch diffs file-by-file and hunk-by-hunk. It tracks y
 
 ## Install
 
+### Quick install (Linux / macOS)
+
+```sh
+curl -sSL https://raw.githubusercontent.com/nhost/lazyreview/main/get.sh | bash
+```
+
+Or specify a version:
+
+```sh
+curl -sSL https://raw.githubusercontent.com/nhost/lazyreview/main/get.sh | bash -s 0.1.0
+```
+
+### Go install
+
 ```sh
 go install github.com/nhost/lazyreview@latest
 ```
