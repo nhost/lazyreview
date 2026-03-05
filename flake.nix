@@ -2,7 +2,7 @@
   description = "TUI code review helper";
 
   inputs = {
-    nixops.url = "github:nhost/nixops";
+    nixops.url = "github:nhost/nhost";
     nixpkgs.follows = "nixops/nixpkgs";
     flake-utils.follows = "nixops/flake-utils";
     nix-filter.follows = "nixops/nix-filter";
@@ -38,6 +38,7 @@
 
         checkDeps = with pkgs; [
           mockgen
+          git
         ];
 
         nativeBuildInputs = with pkgs; [
@@ -52,7 +53,6 @@
         name = "lazyreview";
         description = "TUI code review helper";
         version = "0.0.0-dev";
-        module = "github.com/nhost/lazyreview";
         submodule = ".";
 
         tags = [ ];
@@ -66,14 +66,14 @@
         checks = {
           nixpkgs-fmt = nixops-lib.nix.check { src = nix-src; };
 
-          go-checks = nixops-lib.go.check {
+          lazyreview = nixops-lib.go.check {
             inherit src submodule ldflags tags buildInputs nativeBuildInputs checkDeps;
           };
         };
 
-        devShells = flake-utils.lib.flattenTree rec {
+        devShells = flake-utils.lib.flattenTree {
           default = nixops-lib.go.devShell {
-            buildInputs = with pkgs; [
+            buildInputs = [
             ] ++ checkDeps ++ buildInputs ++ nativeBuildInputs;
           };
 
