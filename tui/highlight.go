@@ -3,7 +3,6 @@ package tui
 import (
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/lexers"
@@ -13,7 +12,6 @@ import (
 
 // highlighter tokenizes diff lines using chroma and caches the results per file.
 type highlighter struct {
-	mu    sync.Mutex
 	cache map[string][]string // file path -> highlighted lines
 	style *chroma.Style
 }
@@ -21,7 +19,6 @@ type highlighter struct {
 // newHighlighter creates a highlighter with the dracula chroma style.
 func newHighlighter() *highlighter {
 	return &highlighter{
-		mu:    sync.Mutex{},
 		cache: make(map[string][]string),
 		style: styles.Get("dracula"),
 	}
@@ -29,9 +26,6 @@ func newHighlighter() *highlighter {
 
 // clear invalidates the entire highlight cache.
 func (h *highlighter) clear() {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
 	h.cache = make(map[string][]string)
 }
 
@@ -41,9 +35,6 @@ func (h *highlighter) highlightFile(f *diff.File, path string) []string {
 	if f == nil {
 		return nil
 	}
-
-	h.mu.Lock()
-	defer h.mu.Unlock()
 
 	if cached, ok := h.cache[path]; ok {
 		return cached
