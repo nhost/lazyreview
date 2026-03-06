@@ -22,6 +22,26 @@ A TUI tool for reviewing branch diffs file-by-file and hunk-by-hunk. It tracks y
 
 ## Install
 
+### Homebrew
+
+```sh
+brew install nhost/tap/lazyreview
+```
+
+### Nix
+
+If you have flakes enabled:
+
+```sh
+nix profile install github:nhost/lazyreview
+```
+
+Or run it directly without installing:
+
+```sh
+nix run github:nhost/lazyreview
+```
+
 ### Quick install (Linux / macOS)
 
 ```sh

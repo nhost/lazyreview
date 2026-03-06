@@ -42,9 +42,9 @@ version=${1:-latest}
 log "Getting $version version..."
 if [[ "$version" == "latest" ]]; then
     release=$(curl --silent https://api.github.com/repos/${REPO}/releases\?per_page=100 | grep tag_name | head -n 1 | sed 's/.*"tag_name": "\([^"]*\)".*/\1/')
-    version=$( echo $release | sed 's/^v//')
+    version=$( echo $release | sed 's/^.*@//')
 else
-    release="v$version"
+    release="lazyreview@$version"
 fi
 
 # check version exists
