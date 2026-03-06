@@ -91,14 +91,13 @@ jobs:
             ./upload/* checksums.txt
 
       - name: "Update Homebrew formula"
-        uses: mislav/bump-homebrew-formula-action@v3
+        uses: ./.github/actions/update-homebrew-formula
         with:
           formula-name: lazyreview
           homebrew-tap: nhost/homebrew-tap
-          tag-name: ${{ github.ref_name }}
-          download-url: https://github.com/nhost/lazyreview/releases/download/${{ github.ref_name }}/lazyreview-${{ steps.vars.outputs.VERSION }}-darwin-arm64.tar.gz
-        env:
-          COMMITTER_TOKEN: ${{ secrets.GH_PAT }}
+          version: ${{ steps.vars.outputs.VERSION }}
+          assets-dir: upload
+          github-token: ${{ secrets.GH_PAT }}
 
       - name: "Store Nix cache"
         uses: ./.github/actions/cache-nix
