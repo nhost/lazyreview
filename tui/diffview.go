@@ -24,9 +24,11 @@ type diffViewModel struct {
 	height      int
 	focused     bool
 	renderedLen int
+	hl          *highlighter
+	hlCache     []string
 }
 
-func newDiffViewModel() diffViewModel {
+func newDiffViewModel(hl *highlighter) diffViewModel {
 	return diffViewModel{
 		detail:      nil,
 		activeHunk:  0,
@@ -35,6 +37,8 @@ func newDiffViewModel() diffViewModel {
 		height:      defaultDiffHeight,
 		focused:     false,
 		renderedLen: 0,
+		hl:          hl,
+		hlCache:     nil,
 	}
 }
 
@@ -43,6 +47,12 @@ func (m *diffViewModel) setDetail(d *versioncontrol.ChangeDetail) {
 	m.activeHunk = 0
 	m.scrollY = 0
 	m.renderedLen = m.computeRenderedLen()
+
+	if d != nil {
+		m.hlCache = m.hl.highlightFile(d.File, d.Path)
+	} else {
+		m.hlCache = nil
+	}
 }
 
 func (m *diffViewModel) computeRenderedLen() int {
@@ -173,6 +183,8 @@ func (m *diffViewModel) render() string {
 func (m *diffViewModel) renderHunks() []string {
 	var allLines []string
 
+	lineIdx := 0
+
 	for hunkIdx, hunk := range m.detail.File.Hunks {
 		isActive := hunkIdx == m.activeHunk && m.focused
 		isStaged := m.detail.Hunks[hunkIdx].Staged
@@ -183,11 +195,13 @@ func (m *diffViewModel) renderHunks() []string {
 		}
 
 		allLines = append(allLines, headerPrefix+hunkHeaderStyle().Render(hunk.Header))
+		lineIdx++ // hunk header
 
 		border := m.hunkBorder(isActive, isStaged)
 
 		for _, line := range hunk.Lines {
-			allLines = append(allLines, border+m.styleLine(line))
+			allLines = append(allLines, border+m.styleLine(line, lineIdx))
+			lineIdx++
 		}
 	}
 
@@ -217,7 +231,18 @@ func (m *diffViewModel) clampScroll(totalLines int) {
 	}
 }
 
-func (m *diffViewModel) styleLine(line diff.Line) string {
+func (m *diffViewModel) styleLine(line diff.Line, lineIdx int) string {
+	plain := m.plainStyleLine(line)
+
+	var highlight string
+	if lineIdx >= 0 && lineIdx < len(m.hlCache) {
+		highlight = m.hlCache[lineIdx]
+	}
+
+	return m.hl.styleLine(line, highlight, plain)
+}
+
+func (m *diffViewModel) plainStyleLine(line diff.Line) string {
 	switch line.Type {
 	case diff.Added:
 		return addedStyle().Render(line.Content)
