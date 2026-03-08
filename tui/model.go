@@ -161,6 +161,7 @@ type Model struct { //nolint:recvcheck
 	diffView          diffViewModel
 	help              helpModel
 	commit            commitModel
+	hl                *highlighter
 	review            View
 	git               GitView
 	active            int
@@ -194,8 +195,9 @@ func NewModel(
 		cfg = gitViewConfig()
 	}
 
+	hl := newHighlighter()
 	ft := newFileTreeModel(initialStatuses, cfg)
-	dv := newDiffViewModel()
+	dv := newDiffViewModel(hl)
 	h := newHelpModel(activeIdx == 1)
 	c := newCommitModel()
 
@@ -204,6 +206,7 @@ func NewModel(
 		diffView:          dv,
 		help:              h,
 		commit:            c,
+		hl:                hl,
 		review:            rv,
 		git:               gv,
 		active:            activeIdx,
@@ -307,6 +310,8 @@ func (m Model) handleRefreshDone(msg refreshDoneMsg) Model {
 
 		return m
 	}
+
+	m.hl.clear()
 
 	savedHunk := m.diffView.activeHunk
 	expandedPaths := m.fileTree.expandedPaths()
